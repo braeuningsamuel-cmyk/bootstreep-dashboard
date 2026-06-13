@@ -112,6 +112,9 @@ pub struct UserEntry {
 pub struct AppConfig {
     remote_host: Mutex<String>,
     remote_user: Mutex<String>,
+    sys: Mutex<System>,
+    networks: Mutex<Networks>,
+    disks: Mutex<Disks>,
 }
 
 // ─── Helper Functions ───────────────────────────────────────────────────────
@@ -232,8 +235,8 @@ fn local_shell_cmd(cmd: &str) -> Result<String, String> {
 
 // ─── System Stats ───────────────────────────────────────────────────────────
 
-fn local_system_stats() -> Result<SystemStats, String> {
-    let mut sys = System::new_all();
+fn local_system_stats(config: &AppConfig) -> Result<SystemStats, String> {
+    let mut sys = config.sys.lock().unwrap();
     sys.refresh_all();
 
     let cpu_usage = sys.global_cpu_usage();
@@ -245,7 +248,8 @@ fn local_system_stats() -> Result<SystemStats, String> {
         0.0
     };
 
-    let disks = Disks::new_with_refreshed_list();
+    let mut disks = config.disks.lock().unwrap();
+    disks.refresh(true);
     let (disk_used, disk_total, disk_percent) = if let Some(disk) = disks.first() {
         let disk_total = disk.total_space();
         let disk_used = disk_total - disk.available_space();
@@ -259,7 +263,8 @@ fn local_system_stats() -> Result<SystemStats, String> {
         (0, 0, 0.0)
     };
 
-    let networks = Networks::new_with_refreshed_list();
+    let mut networks = config.networks.lock().unwrap();
+    networks.refresh(true);
     let mut network_rx: u64 = 0;
     let mut network_tx: u64 = 0;
     for (_name, data) in networks.iter() {
@@ -380,7 +385,7 @@ fn test_ssh_connection(config: State<'_, AppConfig>) -> Result<bool, String> {
         let ok = run_ssh(&config, "echo ok").map(|o| o.contains("ok"))?;
         Ok(ok)
     } else {
-        local_system_stats()?;
+        local_system_stats(&config)?;
         Ok(true)
     }
 }
@@ -392,7 +397,7 @@ fn system_stats(config: State<'_, AppConfig>) -> Result<SystemStats, String> {
     if is_remote(&config) {
         remote_system_stats(&config)
     } else {
-        local_system_stats()
+        local_system_stats(&config)
     }
 }
 
@@ -881,7 +886,8 @@ fn storage_info(config: State<'_, AppConfig>) -> Result<Vec<StorageMount>, Strin
         }
         Ok(mounts)
     } else {
-        let disks = Disks::new_with_refreshed_list();
+        let mut disks = config.disks.lock().unwrap();
+        disks.refresh(true);
         let mut mounts = Vec::new();
         for disk in disks.iter() {
             let total = disk.total_space();
@@ -929,7 +935,7 @@ fn process_list(config: State<'_, AppConfig>) -> Result<Vec<ProcessInfo>, String
         }
         Ok(procs)
     } else {
-        let mut sys = System::new_all();
+        let mut sys = config.sys.lock().unwrap();
         sys.refresh_all();
         let mut procs: Vec<ProcessInfo> = sys
             .processes()
@@ -1018,15 +1024,18 @@ fn package_action(
         return Err("Invalid package action".to_string());
     }
     let escaped = shell_escape(&name);
-    // Detect package manager and run appropriate command
-    let script = format!(
-        r#"if command -v apt >/dev/null 2>&1; then sudo apt {} {} -y 2>&1; elif command -v dnf >/dev/null 2>&1; then sudo dnf {} {} -y 2>&1; elif command -v pacman >/dev/null 2>&1; then sudo pacman -S {} --noconfirm 2>&1; else echo "Kein Paketmanager"; fi"#,
-        if action == "remove" { "remove" } else if action == "update" { "upgrade" } else { "install" },
-        escaped,
-        if action == "remove" { "remove" } else if action == "update" { "upgrade" } else { "install" },
-        escaped,
-        escaped
-    );
+    let script = match action.as_str() {
+        "install" => format!(
+            r#"if command -v apt >/dev/null 2>&1; then sudo apt install -y {}; elif command -v dnf >/dev/null 2>&1; then sudo dnf install -y {}; elif command -v pacman >/dev/null 2>&1; then sudo pacman -S --noconfirm {}; else echo "Kein Paketmanager"; fi"#,
+            escaped, escaped, escaped
+        ),
+        "remove" => format!(
+            r#"if command -v apt >/dev/null 2>&1; then sudo apt remove -y {}; elif command -v dnf >/dev/null 2>&1; then sudo dnf remove -y {}; elif command -v pacman >/dev/null 2>&1; then sudo pacman -R --noconfirm {}; else echo "Kein Paketmanager"; fi"#,
+            escaped, escaped, escaped
+        ),
+        "update" => r#"if command -v apt >/dev/null 2>&1; then sudo apt update && sudo apt upgrade -y; elif command -v dnf >/dev/null 2>&1; then sudo dnf upgrade -y; elif command -v pacman >/dev/null 2>&1; then sudo pacman -Syu --noconfirm; else echo "Kein Paketmanager"; fi"#.to_string(),
+        _ => return Err("Invalid package action".to_string()),
+    };
     if is_remote(&config) {
         run_ssh(&config, &script)
     } else {
@@ -1097,6 +1106,9 @@ pub fn run() {
         .manage(AppConfig {
             remote_host: Mutex::new(String::new()),
             remote_user: Mutex::new(String::new()),
+            sys: Mutex::new(System::new_all()),
+            networks: Mutex::new(Networks::new_with_refreshed_list()),
+            disks: Mutex::new(Disks::new_with_refreshed_list()),
         })
         .invoke_handler(tauri::generate_handler![
             // Connection

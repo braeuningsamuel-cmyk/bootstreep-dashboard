@@ -1,0 +1,95 @@
+name: 'Release Atlas.Lab'
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  desktop-build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'ubuntu-22.04' # for AppImage and DEB
+            args: ''
+          - platform: 'windows-latest' # for MSI and EXE
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: install dependencies (ubuntu only)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: install app dependencies
+        run: npm install
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version
+          releaseName: 'Atlas.Lab v__VERSION__'
+          releaseBody: 'See the assets to download this version and install.'
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
+
+  android-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+
+      - name: setup java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: setup android
+        uses: android-actions/setup-android@v3
+
+      - name: install ndk
+        run: sdkmanager "ndk;25.2.9519653"
+
+      - name: install dependencies
+        run: npm install
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2.0.0"
+
+      - name: Init Android
+        run: cargo tauri android init
+
+      - name: Build Android APK
+        run: cargo tauri android build --apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release.apk
+          path: src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk
