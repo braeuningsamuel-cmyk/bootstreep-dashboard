@@ -224,5 +224,5 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 <p align="center">
   <sub>Built with Tauri 2.x · Rust · Vanilla JS</sub><br>
-  <sub>Atlas.Lab Dashboard v2.0.0</sub>
+  <sub>Atlas.Lab Dashboard v2.1.0</sub>
 </p>
