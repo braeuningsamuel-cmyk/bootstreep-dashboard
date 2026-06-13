@@ -1,0 +1,35 @@
+{
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/target": true,
+    "**/src-tauri/target": true,
+    "**/dist": true,
+    "**/*.log": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/target": true,
+    "**/src-tauri/target": true,
+    "**/dist": true
+  },
+  "rust-analyzer.checkOnSave": {
+    "command": "clippy",
+    "extraArgs": ["--manifest-path", "src-tauri/Cargo.toml"]
+  },
+  "rust-analyzer.cargo.targetDir": "target",
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "emmet.includeLanguages": {
+    "javascript": "html",
+    "typescript": "html"
+  },
+  "terminal.integrated.defaultProfile.windows": "PowerShell"
+}

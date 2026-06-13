@@ -1,16 +1,28 @@
 {
   "name": "atlaslab-dashboard",
-  "version": "1.0.0",
-  "description": "Atlas.Lab Homelab Server Dashboard",
+  "version": "2.0.0",
+  "description": "Atlas.Lab Homelab Server Dashboard - Tauri 2.x Desktop App",
+  "author": "Atlas.Lab",
+  "license": "MIT",
   "scripts": {
     "tauri": "tauri",
     "dev": "tauri dev",
-    "build": "tauri build"
+    "build": "tauri build",
+    "build:debug": "tauri build --debug",
+    "preview": "tauri build --no-bundle",
+    "check": "cargo check --manifest-path src-tauri/Cargo.toml",
+    "clippy": "cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings",
+    "fmt": "cargo fmt --manifest-path src-tauri/Cargo.toml --all",
+    "icon": "tauri icon src-tauri/icons/icon.png"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2"
   },
   "dependencies": {
     "@tauri-apps/api": "^2"
-  }
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "npm@10.9.8"
 }

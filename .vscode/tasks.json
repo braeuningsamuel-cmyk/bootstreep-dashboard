@@ -1,0 +1,107 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "tauri: dev",
+      "type": "shell",
+      "command": "npm run tauri dev",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [],
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "tauri: dev (debug)",
+      "type": "shell",
+      "command": "npm run tauri dev",
+      "group": "build",
+      "problemMatcher": [],
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "dependsOn": "npm: install"
+    },
+    {
+      "label": "tauri: dev (stop)",
+      "type": "shell",
+      "command": "taskkill /F /IM atlaslab-dashboard.exe 2>nul; taskkill /F /IM node.exe 2>nul",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "tauri: build",
+      "type": "shell",
+      "command": "npm run tauri build",
+      "group": "build",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "npm: install",
+      "type": "npm",
+      "script": "install",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "cargo: check",
+      "type": "shell",
+      "command": "cargo check --manifest-path src-tauri/Cargo.toml",
+      "group": "test",
+      "problemMatcher": [
+        "$rustc"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "cargo: clippy",
+      "type": "shell",
+      "command": "cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings",
+      "group": "test",
+      "problemMatcher": [
+        "$rustc"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "cargo: fmt",
+      "type": "shell",
+      "command": "cargo fmt --manifest-path src-tauri/Cargo.toml --all",
+      "group": "build",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "generate: icons",
+      "type": "shell",
+      "command": "npm run tauri icon src-tauri/icons/icon.png",
+      "group": "build",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    }
+  ]
+}

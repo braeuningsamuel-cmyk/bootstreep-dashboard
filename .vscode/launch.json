@@ -1,0 +1,46 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug Atlas.Lab Dashboard (Rust)",
+      "cargo": {
+        "args": ["build", "--manifest-path=src-tauri/Cargo.toml"],
+        "filter": {
+          "name": "atlaslab-dashboard",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}/src-tauri",
+      "preLaunchTask": "tauri: dev (debug)",
+      "postDebugTask": "tauri: dev (stop)"
+    },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Debug Frontend (Chrome)",
+      "url": "http://localhost:1420",
+      "webRoot": "${workspaceFolder}/src",
+      "sourceMapPathOverrides": {
+        "webpack:///./src/*": "${webRoot}/*"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Tauri Dev Server",
+      "command": "npm run tauri dev",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Full Stack Debug",
+      "configurations": ["Debug Tauri Dev Server", "Debug Frontend (Chrome)"],
+      "stopAll": true
+    }
+  ]
+}
