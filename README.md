@@ -1,130 +1,228 @@
-# Atlas.Lab Dashboard
+<p align="center">
+  <img src="https://raw.githubusercontent.com/braeuningsamuel-cmyk/atlaslab-dashboard/main/src-tauri/icons/icon.png" width="100" alt="Atlas.Lab Logo">
+</p>
 
-Professional Tauri 2.x Desktop App für Homelab Server Management.
+<h1 align="center">Atlas.Lab Dashboard</h1>
+
+<p align="center">
+  <strong>Homelab Server Management — Desktop App</strong><br>
+  <sub>Tauri 2.x · Rust Backend · Vanilla Frontend · ~2 MB</sub>
+</p>
+
+<p align="center">
+  <a href="#features">Features</a> ·
+  <a href="#screenshots">Screenshots</a> ·
+  <a href="#installation">Installation</a> ·
+  <a href="#development">Development</a> ·
+  <a href="#architecture">Architecture</a> ·
+  <a href="#homelab">Homelab</a> ·
+  <a href="#license">License</a>
+</p>
+
+---
 
 ## Features
 
-- **Dashboard**: CPU, RAM, Disk, Uptime, Network, Docker Container Übersicht
-- **Docker**: Container Management (Start/Stop/Restart/Logs/Exec)
-- **Services**: systemd Service Management
-- **Terminal**: Lokale Shell mit History
-- **Logs**: System-Logs (journalctl)
-- **Ports**: Port-Check für 21 Homelab-Services
-- **Files**: Datei-Explorer mit Editor
-- **Network**: Interfaces, Routes, DNS, Firewall
-- **Storage**: Mounts & Disk Usage
-- **Processes**: Top Prozesse mit Kill
-- **Crontab**: Cron-Job Editor
-- **Packages**: Paketmanager Updates
-- **Users**: Systembenutzer
-- **Power**: Reboot / Shutdown
-- **SSH Remote**: Verbindung zu Remote-Servern
+| Category | Capabilities |
+|----------|-------------|
+| **Dashboard** | Real-time CPU, RAM, Network sparklines · Docker container overview · Uptime |
+| **Docker** | Container lifecycle (start/stop/restart) · Logs · Exec · Live stats |
+| **Services** | systemd service management · Start/stop/enable/disable |
+| **Terminal** | Full PTY terminal with output streaming · Command history |
+| **Files** | File browser · Editor · Create/delete/rename |
+| **Network** | Interfaces · Routes · DNS · Firewall (UFW) |
+| **Storage** | Disk usage · Mount points · SMART info |
+| **Processes** | Top processes by CPU/RAM · Kill |
+| **Crontab** | Cron job editor |
+| **Packages** | apt/dnf/pacman updates · Install/remove |
+| **Users** | System users overview |
+| **Homelab** | WireGuard · Jellyfin · Arr-Stack · Ollama · Syncthing · Uptime Kuma · Nextcloud OCC |
+| **Profiles** | Multi-server management · SSH remote · Profile switching |
+| **Settings** | Theme toggle (Dark/Light/System) · Connection config |
+| **Ports** | Port check for 21 homelab services |
+| **Power** | Reboot / Shutdown |
 
 ## Tech Stack
 
-- **Tauri 2.x** (Rust + WebView2)
-- **Frontend**: Vanilla HTML/CSS/JS (kein Framework)
-- **Theme**: Atlas.Lab Dark (#0a0a0f / #6366f1 / #10b981)
-- **System**: sysinfo 0.33 (CPU, RAM, Disk, Network)
-- **Shell**: tauri-plugin-shell 2
+| Layer | Technology |
+|-------|-----------|
+| **Desktop Framework** | [Tauri 2.x](https://tauri.app) (~2 MB binary) |
+| **Backend** | Rust (sysinfo, tokio, portable-pty) |
+| **Frontend** | Vanilla HTML/CSS/JS (no framework, no build step) |
+| **SSH** | OpenSSH CLI (password-less key auth) |
+| **Theme** | Atlas.Lab Dark (#09090b / #6366f1 / #10b981) |
 
-## Voraussetzungen
+## Screenshots
 
-- **Node.js** 20+
-- **Rust** 1.75+ (MSVC Toolchain via Visual Studio)
-- **Windows 10/11** (WebView2 Runtime)
+> *Desktop app with Dashboard, Docker, Terminal, and Homelab views*
 
-## Entwicklung
+## Installation
+
+### Download
+
+Download the latest release from [GitHub Releases](https://github.com/braeuningsamuel-cmyk/atlaslab-dashboard/releases):
+
+- **Windows**: `Atlas.Lab_2.0.0_x64-setup.exe` (~2 MB)
+- **Windows MSI**: `Atlas.Lab_2.0.0_x64_en-US.msi` (~3 MB)
+
+### Build from Source
+
+**Prerequisites:**
+- [Node.js](https://nodejs.org) 20+
+- [Rust](https://rustup.rs) (MSVC toolchain on Windows)
+- WebView2 Runtime (Windows 10/11)
 
 ```bash
-# Dependencies installieren
+git clone https://github.com/braeuningsamuel-cmyk/atlaslab-dashboard.git
+cd atlaslab-dashboard
 npm install
-
-# Development Server starten (Hot Reload)
-npm run tauri dev
-
-# Production Build
 npm run tauri build
 ```
 
-## VS Code
+Output: `src-tauri/target/release/bundle/nsis/Atlas.Lab_*_x64-setup.exe`
 
-Empfohlene Extensions werden automatisch vorgeschlagen (`.vscode/extensions.json`).
+## Development
 
-### Debugging
+```bash
+# Start dev server with hot reload
+npm run tauri dev
 
-1. **Full Stack Debug** (F5) → startet Dev Server + Chrome Debugger
-2. **Debug Atlas.Lab Dashboard (Rust)** → LLDB Debugger für Rust Backend
-3. **Debug Frontend (Chrome)** → nur Frontend Debugging
+# Production build
+npm run tauri build
 
-### Tasks (Ctrl+Shift+P → Tasks)
+# Debug build (with DevTools)
+npm run tauri build --debug
 
-- `tauri: dev` - Dev Server
-- `tauri: build` - Production Build
-- `cargo: check` - Rust Type Check
-- `cargo: clippy` - Linting
-- `cargo: fmt` - Formatting
+# Rust checks
+npm run check       # Type check
+npm run clippy      # Lint
+npm run fmt         # Format
+```
 
-## Projektstruktur
+### VS Code
+
+Open the project in VS Code — extensions are auto-suggested via `.vscode/extensions.json`.
+
+| Shortcut | Action |
+|----------|--------|
+| `F5` | Full Stack Debug (Rust + Chrome) |
+| `Ctrl+Shift+P` → Tasks | tauri:dev, tauri:build, cargo:check, cargo:clippy |
+
+## Architecture
 
 ```
-AtlasLab-Dashboard/
-├── .vscode/              # VS Code Config
-│   ├── launch.json       # Debug Configs
-│   ├── tasks.json        # Build Tasks
-│   ├── settings.json     # Editor Settings
-│   └── extensions.json   # Empfohlene Extensions
-├── src/                  # Frontend
-│   ├── index.html        # Single-File SPA (HTML + CSS + JS)
-│   └── main.js           # App Logic
-├── src-tauri/            # Rust Backend
-│   ├── Cargo.toml
-│   ├── tauri.conf.json
-│   ├── build.rs
-│   ├── capabilities/     # Tauri 2.x Permissions
+atlaslab-dashboard/
+├── src/                          # Frontend (Vanilla JS)
+│   ├── index.html                # Single-file SPA (~2000 lines)
+│   └── main.js                   # App logic (~900 lines)
+│
+├── src-tauri/                    # Rust Backend
+│   ├── src/
+│   │   ├── lib.rs                # 46 Tauri commands (~1600 lines)
+│   │   └── main.rs               # Entry point
+│   ├── Cargo.toml                # Rust dependencies
+│   ├── tauri.conf.json           # Tauri config
+│   ├── capabilities/             # Tauri 2.x permission system
 │   │   └── default.json
-│   ├── icons/            # App Icons
-│   └── src/
-│       ├── lib.rs        # Tauri Commands & Logic
-│       └── main.rs       # Entry Point
-└── package.json
+│   └── permissions/              # 46 permission definitions
+│       ├── allow-*.json
+│       └── shell-scope-homelab.json
+│
+├── .vscode/                      # VS Code config
+│   ├── launch.json               # Debug configs
+│   ├── tasks.json                # Build tasks
+│   ├── settings.json             # Editor settings
+│   └── extensions.json           # Recommended extensions
+│
+├── .github/workflows/
+│   └── release.yml               # CI: Build + Release (Windows/Linux/Android)
+│
+├── package.json                  # Node.js config
+└── README.md
 ```
 
-## Build Output
+### Commands Overview (46 total)
 
-Nach `npm run tauri build`:
+| Command | Description |
+|---------|-------------|
+| `system_stats` | CPU, RAM, disk, network, uptime |
+| `docker_list` | List Docker containers |
+| `docker_action` | Start/stop/restart container |
+| `docker_logs` | Container logs |
+| `docker_exec` | Execute command in container |
+| `docker_stats` | Live Docker stats |
+| `service_list` | List systemd services |
+| `service_action` | Start/stop/restart service |
+| `run_command` | Execute shell command |
+| `file_list/read/write/delete/mkdir/rename` | File operations |
+| `network_info` | Network interfaces, routes, DNS |
+| `firewall_status/action` | UFW firewall management |
+| `storage_info` | Disk usage and mounts |
+| `process_list/kill` | Process management |
+| `crontab_list/save` | Cron job management |
+| `package_updates/action` | Package manager operations |
+| `user_list` | System users |
+| `check_ports` | Port availability check |
+| `system_power` | Reboot/shutdown |
+| `set_connection/get_connection` | SSH connection config |
+| `test_ssh_connection` | Test SSH connectivity |
+| `allow_pty_spawn/write/resize/close` | PTY terminal |
+| `allow_wireguard_peers` | WireGuard VPN peers |
+| `allow_jellyfin_control` | Jellyfin media server |
+| `allow_arr_stack` | Sonarr/Radarr/Lidarr |
+| `allow_ollama_models` | Ollama LLM models |
+| `allow_syncthing_folders` | Syncthing file sync |
+| `allow_uptime_kuma` | Uptime monitoring |
+| `allow_nextcloud_occ` | Nextcloud CLI |
+| `profile_list/add/remove/switch/get_active` | Server profiles |
 
-- `src-tauri/target/release/bundle/nsis/Atlas.Lab_2.0.0_x64-setup.exe` (~2 MB)
-- `src-tauri/target/release/bundle/msi/Atlas.Lab_2.0.0_x64_en-US.msi` (~3 MB)
+## Homelab
 
-## SSH Remote Zugriff
+Atlas.Lab Dashboard is designed for Ubuntu Server 24.04 homelabs with Docker.
 
-1. Server-IP & User in Topbar eingeben
-2. "Verbinden" klicken (SSH Key Auth vorausgesetzt)
-3. App wechselt in Remote-Modus (lila Badge)
-4. Alle Commands laufen auf dem Remote-Server
-
-## Homelab Port-Mapping (Ports Tab)
+### Port Mapping
 
 | Port | Service |
 |------|---------|
 | 22 | SSH |
 | 53 | Pi-hole DNS |
 | 80/443 | HTTP/HTTPS (Caddy) |
-| 3000 | Hermes |
+| 3000 | Hermes (AI) |
 | 3001 | Uptime Kuma |
 | 445 | Samba |
-| 51820 | WireGuard |
+| 51820 | WireGuard VPN |
 | 8080 | Websurfx |
 | 8081 | Pi-hole Web |
 | 8082/9443 | Nextcloud AIO |
-| 8087 | AMP |
+| 8087 | AMP (Minecraft) |
 | 8096 | Jellyfin |
 | 8384 | Syncthing |
 | 8989/7878/9696/6767 | Arr Stack |
 | 9050 | Tor |
-| 11434 | Ollama |
+| 11434 | Ollama (AI) |
 
-## Lizenz
+### SSH Remote
 
-MIT
+1. Enter Server IP and User in the topbar
+2. Click "Verbinden" (SSH key auth required)
+3. App switches to Remote mode (purple badge)
+4. All commands execute on the remote server
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing`)
+3. Commit changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing`)
+5. Open a Pull Request
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+<p align="center">
+  <sub>Built with Tauri 2.x · Rust · Vanilla JS</sub><br>
+  <sub>Atlas.Lab Dashboard v2.0.0</sub>
+</p>

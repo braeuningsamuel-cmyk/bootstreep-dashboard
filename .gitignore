@@ -1,12 +1,36 @@
+# Dependencies
 node_modules/
+package-lock.json
+
+# Rust / Tauri build
 src-tauri/target/
 src-tauri/gen/
-src-tauri/icons/
 src-tauri/Cargo.lock
-package-lock.json
+
+# App icons (generated)
+src-tauri/icons/
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
 Thumbs.db
-*.png
-*.icns
+desktop.ini
+
+# Build output
 *.exe
 *.msi
+*.dmg
+*.AppImage
+*.deb
+*.rpm
+*.apk
+
+# Temporary files
+*.tmp
+*.bak
+*.log
