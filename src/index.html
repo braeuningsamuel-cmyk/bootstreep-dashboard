@@ -1217,7 +1217,7 @@
 
       .topbar .tb-stat,
       .topbar .mode-badge,
-      .topbar .conn-input,
+      .topbar .conn-input:not(#profile-select),
       .topbar .conn-btn,
       .topbar #conn-dot {
         display: none
@@ -1226,6 +1226,11 @@
       .main {
         margin-left: 0;
         padding-bottom: calc(var(--bn) + 16px)
+      }
+
+      #profile-select {
+        max-width: 120px !important;
+        font-size: 12px !important;
       }
 
       .page {

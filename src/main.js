@@ -82,21 +82,24 @@ function applyTheme(theme) {
 
 document.addEventListener('DOMContentLoaded', () => {
   applyTheme(getTheme());
-  // Theme button clicks
   document.querySelectorAll('.theme-btn').forEach(btn => {
     btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
   });
-  // Listen for live metrics events from Tauri backend
+  initLiveMetrics();
+});
+
+// Listen for live metrics events from Tauri backend
+let liveMetricsUnlisten = null;
+async function initLiveMetrics() {
   try {
-    window.__TAURI__?.event?.listen('live-metrics', (e) => {
+    if (!window.__TAURI__?.event?.listen) return;
+    liveMetricsUnlisten = await window.__TAURI__.event.listen('live-metrics', (e) => {
       const m = e.payload;
       if (!m) return;
-      // Update topbar
       const cpuEl = document.getElementById('tb-cpu');
       const memEl = document.getElementById('tb-mem');
       if (cpuEl) cpuEl.textContent = m.cpu.toFixed(1) + '%';
       if (memEl) memEl.textContent = m.mem_pct.toFixed(1) + '%';
-      // Update dashboard cards if visible
       const dCpu = document.getElementById('d-cpu');
       if (dCpu) {
         dCpu.textContent = m.cpu.toFixed(1) + '%';
@@ -110,7 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('d-net-tx').textContent = formatBytes(m.tx);
         const u = document.getElementById('dash-updated');
         if (u) u.textContent = 'Live: ' + new Date().toLocaleTimeString('de-DE');
-        // Sparklines
         sparkData.cpu.push(m.cpu); if (sparkData.cpu.length > SPARK_MAX) sparkData.cpu.shift();
         sparkData.mem.push(m.mem_pct); if (sparkData.mem.length > SPARK_MAX) sparkData.mem.shift();
         sparkline(document.getElementById('spark-cpu'), sparkData.cpu, '#6366f1');
@@ -118,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   } catch (e) {}
-});
+}
 
 // ── Settings ──
 
