@@ -1,8 +1,8 @@
 {
-  "name": "atlaslab-dashboard",
-  "version": "2.0.0",
-  "description": "Atlas.Lab Homelab Server Dashboard - Tauri 2.x Desktop App",
-  "author": "Atlas.Lab",
+  "name": "bootstreep-dashboard",
+  "version": "2.1.0",
+  "description": "Bootstreep Homelab Server Dashboard - Tauri 2.x Desktop App",
+  "author": "Bootstreep",
   "license": "MIT",
   "scripts": {
     "tauri": "tauri",

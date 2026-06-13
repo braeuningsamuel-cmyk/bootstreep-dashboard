@@ -603,7 +603,7 @@ window.loadStorage = async function loadStorage() {
     // Table
     let html = '';
     mounts.forEach(m => {
-      html += `<tr><td style="font-size:12px">${esc(m.filesystem)}</td><td>${esc(m.mount_point)}</td><td>${formatBytes(m.total)}</td><td>${formatBytes(m.used)}</td><td>${formatBytes(m.available)}</td><td><span class="badge badge-${m.percent > 90 ? 'stopped' : m.percent > 70 ? 'stopped' : 'active'}">${m.percent.toFixed(1)}%</span></td></tr>`;
+      html += `<tr><td style="font-size:12px">${esc(m.filesystem)}</td><td>${esc(m.mount_point)}</td><td>${formatBytes(m.total)}</td><td>${formatBytes(m.used)}</td><td>${formatBytes(m.available)}</td><td><span class="badge badge-${m.percent > 90 ? 'stopped' : m.percent > 70 ? 'warning' : 'active'}">${m.percent.toFixed(1)}%</span></td></tr>`;
     });
     document.getElementById('storage-table').innerHTML = html || '<tr><td colspan="6" style="color:var(--text3)">Keine Daten</td></tr>';
   } catch (e) {
@@ -616,7 +616,7 @@ window.loadStorage = async function loadStorage() {
 function renderProcTable(data) {
   let html = '';
   data.forEach(p => {
-    html += `<tr><td style="font-family:var(--mono);font-size:12px">${p.pid}</td><td>${esc(p.user)}</td><td>${p.cpu.toFixed(1)}%</td><td>${typeof p.mem === 'number' && p.mem > 100 ? formatBytes(p.mem * 1024 * 1024) : p.mem.toFixed(1) + '%'}</td><td style="font-size:11px;color:var(--text3);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.command)}</td><td><button class="action-btn danger" data-action="killProc" data-arg="${p.pid}">Kill</button></td></tr>`;
+    html += `<tr><td style="font-family:var(--mono);font-size:12px">${p.pid}</td><td>${esc(p.user)}</td><td>${p.cpu.toFixed(1)}%</td><td>${p.mem.toFixed(1)}%</td><td style="font-size:11px;color:var(--text3);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.command)}</td><td><button class="action-btn danger" data-action="killProc" data-arg="${p.pid}">Kill</button></td></tr>`;
   });
   document.getElementById('proc-table').innerHTML = html || '<tr><td colspan="6" style="color:var(--text3)">Keine Prozesse</td></tr>';
 }

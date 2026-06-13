@@ -725,6 +725,16 @@
       background: var(--red)
     }
 
+    .badge-warning {
+      background: rgba(245, 158, 11, .1);
+      color: var(--yellow);
+      border: 1px solid rgba(245, 158, 11, .2)
+    }
+
+    .badge-warning::before {
+      background: var(--yellow)
+    }
+
     /* ── Buttons ── */
     .action-btn {
       background: rgba(255, 255, 255, .03);
@@ -1830,7 +1840,7 @@
             <div class="dot g"></div>
           </div><span>terminal ~ bash</span>
         </div>
-        <div class="term-output" id="term-output">Bootstreep Terminal bereit.\n\n</div>
+        <div class="term-output" id="term-output">Bootstreep Terminal bereit.<br><br></div>
         <div class="term-input-row"><span class="term-prompt">$</span><input class="term-input" id="term-input"
             placeholder="Befehl eingeben…"></div>
       </div>

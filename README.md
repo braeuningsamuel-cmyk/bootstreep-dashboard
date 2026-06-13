@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/braeuningsamuel-cmyk/atlaslab-dashboard/main/src-tauri/icons/icon.png" width="100" alt="Atlas.Lab Logo">
+  <img src="https://raw.githubusercontent.com/braeuningsamuel-cmyk/bootstreep-dashboard/main/src-tauri/icons/icon.png" width="100" alt="Bootstreep Logo">
 </p>
 
-<h1 align="center">Atlas.Lab Dashboard</h1>
+<h1 align="center">Bootstreep Dashboard</h1>
 
 <p align="center">
   <strong>Homelab Server Management — Desktop App</strong><br>
@@ -50,7 +50,7 @@
 | **Backend** | Rust (sysinfo, tokio, portable-pty) |
 | **Frontend** | Vanilla HTML/CSS/JS (no framework, no build step) |
 | **SSH** | OpenSSH CLI (password-less key auth) |
-| **Theme** | Atlas.Lab Dark (#09090b / #6366f1 / #10b981) |
+| **Theme** | Bootstreep Dark (#09090b / #6366f1 / #10b981) |
 
 ## Screenshots
 
@@ -60,10 +60,10 @@
 
 ### Download
 
-Download the latest release from [GitHub Releases](https://github.com/braeuningsamuel-cmyk/atlaslab-dashboard/releases):
+Download the latest release from [GitHub Releases](https://github.com/braeuningsamuel-cmyk/bootstreep-dashboard/releases):
 
-- **Windows**: `Atlas.Lab_2.0.0_x64-setup.exe` (~2 MB)
-- **Windows MSI**: `Atlas.Lab_2.0.0_x64_en-US.msi` (~3 MB)
+- **Windows**: `Bootstreep_2.1.0_x64-setup.exe` (~2 MB)
+- **Windows MSI**: `Bootstreep_2.1.0_x64_en-US.msi` (~3 MB)
 
 ### Build from Source
 
@@ -73,13 +73,13 @@ Download the latest release from [GitHub Releases](https://github.com/braeunings
 - WebView2 Runtime (Windows 10/11)
 
 ```bash
-git clone https://github.com/braeuningsamuel-cmyk/atlaslab-dashboard.git
-cd atlaslab-dashboard
+git clone https://github.com/braeuningsamuel-cmyk/bootstreep-dashboard.git
+cd bootstreep-dashboard
 npm install
 npm run tauri build
 ```
 
-Output: `src-tauri/target/release/bundle/nsis/Atlas.Lab_*_x64-setup.exe`
+Output: `src-tauri/target/release/bundle/nsis/Bootstreep_*_x64-setup.exe`
 
 ## Development
 
@@ -111,7 +111,7 @@ Open the project in VS Code — extensions are auto-suggested via `.vscode/exten
 ## Architecture
 
 ```
-atlaslab-dashboard/
+bootstreep-dashboard/
 ├── src/                          # Frontend (Vanilla JS)
 │   ├── index.html                # Single-file SPA (~2000 lines)
 │   └── main.js                   # App logic (~900 lines)
@@ -178,7 +178,7 @@ atlaslab-dashboard/
 
 ## Homelab
 
-Atlas.Lab Dashboard is designed for Ubuntu Server 24.04 homelabs with Docker.
+Bootstreep Dashboard is designed for Ubuntu Server 24.04 homelabs with Docker.
 
 ### Port Mapping
 
@@ -224,5 +224,5 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 <p align="center">
   <sub>Built with Tauri 2.x · Rust · Vanilla JS</sub><br>
-  <sub>Atlas.Lab Dashboard v2.1.0</sub>
+  <sub>Bootstreep Dashboard v2.1.0</sub>
 </p>

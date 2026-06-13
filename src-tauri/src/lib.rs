@@ -1359,6 +1359,9 @@ fn allow_pty_spawn(
         .openpty(size)
         .map_err(|e| format!("PTY open error: {}", e))?;
 
+    #[cfg(target_os = "windows")]
+    let shell = std::env::var("COMSPEC").unwrap_or_else(|_| "powershell.exe".to_string());
+    #[cfg(not(target_os = "windows"))]
     let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/bash".to_string());
     let cmd = CommandBuilder::new(&shell);
     let _child = pair
