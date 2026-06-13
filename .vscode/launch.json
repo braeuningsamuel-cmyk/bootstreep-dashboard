@@ -4,11 +4,11 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug Atlas.Lab Dashboard (Rust)",
+      "name": "Debug Bootstreep Dashboard (Rust)",
       "cargo": {
         "args": ["build", "--manifest-path=src-tauri/Cargo.toml"],
         "filter": {
-          "name": "atlaslab-dashboard",
+          "name": "bootstreep-dashboard",
           "kind": "bin"
         }
       },

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/braeuningsamuel-cmyk/bootstreep-dashboard/main/src-tauri/icons/icon.png" width="100" alt="Bootstreep Logo">
+  <img src="https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/bootstreep-dashboard/main/src-tauri/icons/icon.png" width="100" alt="Bootstreep Logo">
 </p>
 
 <h1 align="center">Bootstreep Dashboard</h1>
@@ -60,7 +60,7 @@
 
 ### Download
 
-Download the latest release from [GitHub Releases](https://github.com/braeuningsamuel-cmyk/bootstreep-dashboard/releases):
+Download the latest release from [GitHub Releases](https://github.com/YOUR_GITHUB_USERNAME/bootstreep-dashboard/releases):
 
 - **Windows**: `Bootstreep_2.1.0_x64-setup.exe` (~2 MB)
 - **Windows MSI**: `Bootstreep_2.1.0_x64_en-US.msi` (~3 MB)
@@ -73,7 +73,7 @@ Download the latest release from [GitHub Releases](https://github.com/braeunings
 - WebView2 Runtime (Windows 10/11)
 
 ```bash
-git clone https://github.com/braeuningsamuel-cmyk/bootstreep-dashboard.git
+git clone https://github.com/YOUR_GITHUB_USERNAME/bootstreep-dashboard.git
 cd bootstreep-dashboard
 npm install
 npm run tauri build
