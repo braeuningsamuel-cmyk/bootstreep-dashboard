@@ -1,6 +1,0 @@
-{
-  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/v2/tooling/cli/schema.json#/definitions/Permission",
-  "identifier": "allow-pty-resize",
-  "description": "Allow PTY resize",
-  "commands": ["allow_pty_resize"]
-}

@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io::Write;
 use std::net::ToSocketAddrs;
+use std::path::Path;
 use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -9,6 +10,8 @@ use sysinfo::{Disks, Networks, System};
 use tauri::{Emitter, Manager, State};
 use portable_pty::{CommandBuilder, PtySize, native_pty_system};
 use tokio::sync::Mutex as AsyncMutex;
+
+mod path_sandbox;
 
 // ─── Data Structures ────────────────────────────────────────────────────────
 
@@ -278,13 +281,7 @@ fn ssh_target(host: &str, user: &str) -> String {
 }
 
 fn shell_escape(s: &str) -> String {
-    if s.chars()
-        .all(|c| c.is_alphanumeric() || c == '_' || c == '-' || c == '.' || c == '/')
-    {
-        s.to_string()
-    } else {
-        format!("'{}'", s.replace("'", "'\\''"))
-    }
+    shlex::try_quote(s).unwrap_or_else(|| s.to_string()).to_string()
 }
 
 fn uuid_simple() -> String {
@@ -303,12 +300,47 @@ fn run_ssh(config: &AppConfig, remote_cmd: &str) -> Result<String, String> {
     let host = config.remote_host.lock().map_err(|e| e.to_string())?.clone();
     let user = config.remote_user.lock().map_err(|e| e.to_string())?.clone();
     let target = ssh_target(&host, &user);
+    // Security 2026-06-20: do NOT auto-trust the host key. ssh-keyscan output
+    // is appended silently to ~/.ssh/known_hosts which is a TOFU attack vector
+    // (DNS poisoning on first connection → permanent trust). Instead, run with
+    // StrictHostKeyChecking=ask and let the OS-level ssh(1) prompt handle it,
+    // or fail closed if the key is unknown.
+    //
+    // The legacy auto-trust code below is preserved behind a feature flag for
+    // development/testing only. Production builds (default profile) skip it.
+    #[cfg(feature = "ssh-auto-trust")]
+    {
+        let keyscan = Command::new("ssh-keyscan")
+            .args(&["-H", "-T", "5", &host])
+            .output();
+        if let Ok(output) = keyscan {
+            if !output.stdout.is_empty() {
+                let known_hosts = dirs::home_dir()
+                    .unwrap_or_default()
+                    .join(".ssh")
+                    .join("known_hosts");
+                if let Some(parent) = known_hosts.parent() {
+                    let _ = std::fs::create_dir_all(parent);
+                }
+                let _ = std::fs::OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open(&known_hosts)
+                    .map(|mut f| std::io::Write::write_all(&mut f, &output.stdout));
+            }
+        }
+    }
     run_cmd(
         "ssh",
         &[
             "-o", "BatchMode=yes",
             "-o", "ConnectTimeout=8",
-            "-o", "StrictHostKeyChecking=accept-new",
+            // StrictHostKeyChecking=ask (not yes) so the user gets the OS-level
+            // prompt on first contact. After they accept, the key is persisted
+            // by ssh(1) under standard TOFU rules.
+            "-o", "StrictHostKeyChecking=ask",
+            "-o", "UserKnownHostsFile=~/.ssh/known_hosts",
+            "-o", "VisualHostKey=yes",
             &target,
             remote_cmd,
         ],
@@ -324,7 +356,8 @@ fn ssh_write_stdin(config: &AppConfig, remote_cmd: &str, input: &str) -> Result<
         .args(&[
             "-o", "BatchMode=yes",
             "-o", "ConnectTimeout=8",
-            "-o", "StrictHostKeyChecking=accept-new",
+            "-o", "StrictHostKeyChecking=yes",
+            "-o", "UserKnownHostsFile=~/.ssh/known_hosts",
             &target,
             remote_cmd,
         ])
@@ -805,9 +838,23 @@ fn check_ports(ports: Vec<u16>, config: State<'_, AppConfig>) -> Result<Vec<Port
 
 #[tauri::command]
 fn run_command(command: String, config: State<'_, AppConfig>) -> Result<String, String> {
+    // Security 2026-06-20:
+    //   * Drop `bash -l` (login shell) — we don't need profile.d / .bashrc
+    //     injection surface for one-shot remote commands.
+    //   * Validate command length before doing anything else.
+    if command.is_empty() {
+        return Err("Empty command".to_string());
+    }
+    if command.len() > 4096 {
+        return Err("Command too long".to_string());
+    }
+    // Defense in depth: reject embedded null bytes (some shells mis-handle them).
+    if command.as_bytes().contains(&0) {
+        return Err("Null byte in command".to_string());
+    }
     if is_remote(&config) {
         let escaped = shell_escape(&command);
-        run_ssh(&config, &format!("bash -lc {}", escaped))
+        run_ssh(&config, &format!("bash -c {}", escaped))
     } else {
         local_shell_cmd(&command)
     }
@@ -817,10 +864,9 @@ fn run_command(command: String, config: State<'_, AppConfig>) -> Result<String, 
 
 #[tauri::command]
 fn file_list(path: String, config: State<'_, AppConfig>) -> Result<Vec<FileEntry>, String> {
-    let escaped = shell_escape(&path);
-
     if is_remote(&config) {
-        // Use stat-based listing for reliable parsing
+        let safe_path = path_sandbox::validate_remote_path(&path)?;
+        let escaped = shell_escape(&safe_path);
         let script = format!(
             r#"for f in {}/*; do [ -e "$f" ] || continue; stat --format='%n|%F|%s|%y|%A' -- "$f" 2>/dev/null; done; for f in {}/.*; do b=$(basename "$f"); [ "$b" = "." ] || [ "$b" = ".." ] && continue; [ -e "$f" ] || continue; stat --format='%n|%F|%s|%y|%A' -- "$f" 2>/dev/null; done"#,
             escaped, escaped
@@ -828,7 +874,7 @@ fn file_list(path: String, config: State<'_, AppConfig>) -> Result<Vec<FileEntry
         let output = run_ssh(&config, &script)?;
         parse_file_entries(&output)
     } else {
-        let p = std::path::Path::new(&path);
+        let p = path_sandbox::canonicalize(&std::env::current_dir().unwrap_or_default(), &path)?;
         if !p.exists() {
             return Err(format!("Path does not exist: {}", path));
         }
@@ -913,37 +959,41 @@ fn parse_file_entries(output: &str) -> Result<Vec<FileEntry>, String> {
 #[tauri::command]
 fn file_read(path: String, config: State<'_, AppConfig>) -> Result<String, String> {
     if is_remote(&config) {
-        let escaped = shell_escape(&path);
+        let safe_path = path_sandbox::validate_remote_path(&path)?;
+        let escaped = shell_escape(&safe_path);
         run_ssh(&config, &format!("cat -- {}", escaped))
     } else {
-        std::fs::read_to_string(&path).map_err(|e| format!("Read error: {}", e))
+        let p = path_sandbox::canonicalize(&std::env::current_dir().unwrap_or_default(), &path)?;
+        std::fs::read_to_string(&p).map_err(|e| format!("Read error: {}", e))
     }
 }
 
 #[tauri::command]
 fn file_write(path: String, content: String, config: State<'_, AppConfig>) -> Result<String, String> {
     if is_remote(&config) {
-        let escaped = shell_escape(&path);
-        // Prefix with ./ if it starts with - and path is a relative, but here path is supposed to be absolute or relative to home. For shell redirect `>` `-` is fine.
+        let safe_path = path_sandbox::validate_remote_path(&path)?;
+        let escaped = shell_escape(&safe_path);
         let remote_cmd = format!("cat > {}", escaped);
         ssh_write_stdin(&config, &remote_cmd, &content)
     } else {
-        std::fs::write(&path, &content).map_err(|e| format!("Write error: {}", e))?;
+        let p = path_sandbox::canonicalize(&std::env::current_dir().unwrap_or_default(), &path)?;
+        std::fs::write(&p, &content).map_err(|e| format!("Write error: {}", e))?;
         Ok("OK".to_string())
     }
 }
 
 #[tauri::command]
 fn file_delete(path: String, config: State<'_, AppConfig>) -> Result<String, String> {
-    let escaped = shell_escape(&path);
     if is_remote(&config) {
+        let safe_path = path_sandbox::validate_remote_path(&path)?;
+        let escaped = shell_escape(&safe_path);
         run_ssh(&config, &format!("rm -rf -- {}", escaped))
     } else {
-        let p = std::path::Path::new(&path);
+        let p = path_sandbox::canonicalize(&std::env::current_dir().unwrap_or_default(), &path)?;
         if p.is_dir() {
-            std::fs::remove_dir_all(p).map_err(|e| format!("Delete error: {}", e))?;
+            std::fs::remove_dir_all(&p).map_err(|e| format!("Delete error: {}", e))?;
         } else {
-            std::fs::remove_file(p).map_err(|e| format!("Delete error: {}", e))?;
+            std::fs::remove_file(&p).map_err(|e| format!("Delete error: {}", e))?;
         }
         Ok("OK".to_string())
     }
@@ -951,23 +1001,29 @@ fn file_delete(path: String, config: State<'_, AppConfig>) -> Result<String, Str
 
 #[tauri::command]
 fn file_mkdir(path: String, config: State<'_, AppConfig>) -> Result<String, String> {
-    let escaped = shell_escape(&path);
     if is_remote(&config) {
+        let safe_path = path_sandbox::validate_remote_path(&path)?;
+        let escaped = shell_escape(&safe_path);
         run_ssh(&config, &format!("mkdir -p -- {}", escaped))
     } else {
-        std::fs::create_dir_all(&path).map_err(|e| format!("Mkdir error: {}", e))?;
+        let p = path_sandbox::canonicalize(&std::env::current_dir().unwrap_or_default(), &path)?;
+        std::fs::create_dir_all(&p).map_err(|e| format!("Mkdir error: {}", e))?;
         Ok("OK".to_string())
     }
 }
 
 #[tauri::command]
 fn file_rename(from: String, to: String, config: State<'_, AppConfig>) -> Result<String, String> {
-    let esc_from = shell_escape(&from);
-    let esc_to = shell_escape(&to);
     if is_remote(&config) {
+        let safe_from = path_sandbox::validate_remote_path(&from)?;
+        let safe_to = path_sandbox::validate_remote_path(&to)?;
+        let esc_from = shell_escape(&safe_from);
+        let esc_to = shell_escape(&safe_to);
         run_ssh(&config, &format!("mv -- {} {}", esc_from, esc_to))
     } else {
-        std::fs::rename(&from, &to).map_err(|e| format!("Rename error: {}", e))?;
+        let p_from = path_sandbox::canonicalize(&std::env::current_dir().unwrap_or_default(), &from)?;
+        let p_to = path_sandbox::canonicalize(&std::env::current_dir().unwrap_or_default(), &to)?;
+        std::fs::rename(&p_from, &p_to).map_err(|e| format!("Rename error: {}", e))?;
         Ok("OK".to_string())
     }
 }

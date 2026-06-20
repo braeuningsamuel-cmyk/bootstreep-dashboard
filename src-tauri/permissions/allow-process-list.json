@@ -1,6 +1,0 @@
-{
-  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/v2/tooling/cli/schema.json#/definitions/Permission",
-  "identifier": "allow-process-list",
-  "description": "Allow listing processes",
-  "commands": ["process_list"]
-}
