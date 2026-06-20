@@ -1,0 +1,55 @@
+name: Web Dashboard CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Web Dashboard Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: Verify required web-dashboard files exist
+        run: |
+          echo "Checking web-dashboard structure..."
+          test -f web-dashboard/app.py           && echo "OK  web-dashboard/app.py"           || { echo "MISS web-dashboard/app.py";           exit 1; }
+          test -f web-dashboard/requirements.txt  && echo "OK  web-dashboard/requirements.txt"  || { echo "MISS web-dashboard/requirements.txt";  exit 1; }
+
+      - name: Setup Python
+        uses: actions/setup-python@v5.3.0
+        with:
+          python-version: "3.11"
+
+      - name: Validate Python syntax (py_compile)
+        run: |
+          echo "Compiling web-dashboard/app.py..."
+          python -m py_compile web-dashboard/app.py && echo "OK  syntax valid"
+
+      - name: Install dependencies (for smoke test only)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r web-dashboard/requirements.txt
+
+      - name: Smoke test Flask app
+        run: |
+          echo "Starting Flask smoke test..."
+          cd web-dashboard
+          python app.py &
+          SERVER_PID=$!
+          sleep 3
+          echo "GET /api/health:"
+          curl -sS -o /tmp/health.json -w "HTTP %{http_code}\n" http://127.0.0.1:5000/api/health
+          cat /tmp/health.json
+          echo ""
+          echo "GET /:"
+          curl -sS -o /tmp/index.txt -w "HTTP %{http_code}\n" http://127.0.0.1:5000/
+          head -1 /tmp/index.txt
+          kill $SERVER_PID 2>/dev/null || true
+          wait $SERVER_PID 2>/dev/null || true
