@@ -27,7 +27,7 @@ tokio = { version = "1", features = [
     "io-util",
 ] }
 portable-pty = "0.8"
-dirs = "5"
+dirs = "6"
 shlex = "1"
 
 [features]
