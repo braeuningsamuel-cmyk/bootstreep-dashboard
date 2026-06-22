@@ -28,7 +28,7 @@ tokio = { version = "1", features = [
 ] }
 portable-pty = "0.8"
 dirs = "5"
-shlex = "1"
+shlex = "2"
 
 [features]
 # Convenience flag for development builds; enables ssh-keyscan auto-trust.
