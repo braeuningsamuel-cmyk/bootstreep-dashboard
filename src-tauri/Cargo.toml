@@ -15,7 +15,7 @@ tauri = { version = "2", features = [] }
 tauri-plugin-shell = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-sysinfo = "0.33"
+sysinfo = "0.39"
 # Performance 2026-06-20: drop `full` (brings in net/io/uds/test-util) and
 # declare only the features we actually use. Cuts build time ~30%.
 tokio = { version = "1", features = [
